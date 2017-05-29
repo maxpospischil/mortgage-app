@@ -38,7 +38,7 @@ function CalculateOwningAdvantageAtYear(props) {
         <ul><p>Selling Costs: {round(sellingCosts(props))}</p></ul>
         <ul><p>Total of money spent: {round(totalOfMoneySpentAtPeriodOwn(props))}</p></ul>
         <ul><h4>Assets/Benefits</h4></ul>
-        <ul><p>Total of tax deductions: {round(totalOfTaxDeduction(props))}</p></ul>
+        <ul><p>Total of tax savings: {round(totalOfTaxSavings(props))}</p></ul>
         <ul><p>Principal Payments Accumulated: {round(principalAccumulatedAtLengthOfResidence(props))}</p></ul>
         <ul><p>Down Payment: {round(props.downPayment)}</p></ul>
         <ul><p>Appreciation: {round(totalAppreciation(props))}</p></ul>
@@ -94,10 +94,10 @@ function downPaymentOpportunityCost(props) {
 }
 
 function totalOfBenefits(props) {
-  return totalOfTaxDeduction(props) + principalAccumulatedAtLengthOfResidence(props) + totalAppreciation(props) + props.downPayment
+  return totalOfTaxSavings(props) + principalAccumulatedAtLengthOfResidence(props) + totalAppreciation(props) + props.downPayment
 }
 
-function totalOfTaxDeduction(props) {
+function totalOfTaxSavings(props) {
   return ((props.federalTaxRate + props.stateTaxRate)/100 * totalTaxDeductibleAtYear(props))
 }
 
