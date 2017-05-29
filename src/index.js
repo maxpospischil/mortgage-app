@@ -4,29 +4,92 @@ import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
 
+function round(value) {
+  return Number(Math.round(value+'e'+2)+'e-'+2);
+}
+
 function MonthlyPaymentOwn(props) {
   return <p>Monthly payment owning is: {
-    round(calculateMonthlyOwnCost(
-      props.propertyCost,
-      props.hoa, 
-      props.propertyTax,
-      props.aprPercent,
-      props.mortgageLength,
-      props.downPayment
-    ), 2)
+    round(calculateMonthlyOwnPayment(props))
   }</p>;
 }
 
 function MonthlyPaymentRent(props) {
-  return <p>Monthly payment for rent is: {props.monthlyRent}</p>;
+  return <p>Monthly payment for rent is: {calculateMonthlyRentPayment(props)}</p>;
 }
 
-function round(value, decimals) {
-  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+function CalculateOwningAdvantageAtYear(props) {
+  return(
+  <div>
+    <h2>The Rent vs. Own SMACKDOWNNNNNNNN</h2>
+    <div>
+      <h3>Owning</h3>
+        <ul>Total of monthly mortgage payments: {totalOfMortgagePaymentsAtYear(props)}</ul>
+        <ul><h4>Dead Money</h4></ul>
+        <ul><p>Total of taxes: {totalOfTaxesAtYear(props)}</p></ul>
+        <ul><p>Total of HOA: {totalOfHoaAtYear(props)}</p></ul>
+        <ul><p>Total of interest: </p></ul>
+        <ul><h4>Assets/Benefits</h4></ul>
+        <ul><p>Total Tax Deductions: </p></ul>
+        <ul><p>Principal Accrued: </p></ul>
+        <ul><p>Appreciation: </p></ul>
+        <ul><h4>Net Dead Money: $</h4></ul>
+      <h3>Renting</h3>
+        <ul><h4>Dead Money</h4></ul>
+        <ul><p>Total of rent: </p></ul>
+        <ul><p>Total of renter's insurance </p></ul>
+
+    </div>
+    
+  </div>);
 }
 
-function calculateMonthlyOwnCost(propertyCost, hoa, propertyTax, aprPercent, mortgageLength, downPayment) {
-  return hoa + (propertyTax / 12) + calculateMonthlyMortgagePayment(propertyCost, aprPercent, mortgageLength, downPayment);
+function totalOfTaxesAtYear(props) {
+  const averareAnnualPropertyTax = (props.propertyTax + (props.propertyTax * inflationRateMultiplier(props)))/2
+  return round(averareAnnualPropertyTax * props.lengthOfResidence)
+}
+
+function totalOfHoaAtYear(props) {
+  const averageAnnualHoa = (props.hoa + (props.hoa * inflationRateMultiplier(props)))/2
+  return round(averageAnnualHoa * props.lengthOfResidence)
+}
+
+function inflationRateMultiplier(props) {
+  return (1.0 + (props.inflationRate/100)) ** props.lengthOfResidence
+}
+
+function propertyValueIncreaseMultiplier(props) {
+  return (1.0 + (props.propertyValueIncreaseRate/100)) ** props.lengthOfResidence
+}
+
+function totalOfRentPaymentsAtYear(props) {
+  return calculateMonthlyRentPayment(props) * props.lengthOfResidence
+}
+
+function totalOfMortgagePaymentsAtYear(props) {
+  return round(calculateMonthlyMortgagePayment(
+    props.propertyCost, 
+    props.aprPercent, 
+    props.mortgageLength, 
+    props.downPayment
+  ) * (props.lengthOfResidence * 12))
+}
+
+function totalOfOwningPaymentsAtYear(props) {
+  return calculateMonthlyOwnPayment(props) * props.lengthOfResidence
+}
+
+function calculateMonthlyRentPayment(props) {
+  return props.monthlyRent;
+}
+
+function calculateMonthlyOwnPayment(props) {
+  return props.hoa + (props.propertyTax / 12) + calculateMonthlyMortgagePayment(
+    props.propertyCost, 
+    props.aprPercent, 
+    props.mortgageLength, 
+    props.downPayment
+  );
 }
 
 function calculateMonthlyMortgagePayment(propertyCost, aprPercent, mortgageLength, downPayment) {
@@ -51,14 +114,21 @@ class Calculator extends React.Component {
     this.handleMortgageLengthChange = this.handleMortgageLengthChange.bind(this);
     this.handleDownPaymentChange = this.handleDownPaymentChange.bind(this);
     this.handleRentChange = this.handleRentChange.bind(this);
+    this.handleLengthOfResidenceChange = this.handleLengthOfResidenceChange.bind(this);
+    this.handlePropertyValueIncreaseRateChange = this.handlePropertyValueIncreaseRateChange.bind(this);
+    this.handleInflationRateChange = this.handleInflationRateChange.bind(this);
+
     this.state = {
-      propertyCost: 0,
-      hoa: 0,
-      propertyTax: 0,
+      propertyCost: 182000,
+      hoa: 323,
+      propertyTax: 2195,
       aprPercent: 3.25,
       mortgageLength: 15,
-      downPayment: 0,
-      monthlyRent: 0
+      downPayment: 36400,
+      monthlyRent: 1940,
+      lengthOfResidence: 5,
+      propertyValueIncreaseRate: 3,
+      inflationRate: 2.5
     };
   }
 
@@ -90,6 +160,18 @@ class Calculator extends React.Component {
     this.setState({monthlyRent: e.target.value});
   }
 
+  handleLengthOfResidenceChange(e) {
+    this.setState({lengthOfResidence: e.target.value});
+  }
+
+  handlePropertyValueIncreaseRateChange(e) {
+    this.setState({propertyValueIncreaseRate: e.target.value});
+  }
+
+  handleInflationRateChange(e) {
+    this.setState({inflationRate: e.target.value});
+  }
+
   render() {
 
     const propertyCost = this.state.propertyCost;
@@ -100,6 +182,10 @@ class Calculator extends React.Component {
     const downPayment = this.state.downPayment;
 
     const monthlyRent = this.state.monthlyRent;
+
+    const lengthOfResidence = this.state.lengthOfResidence;
+    const propertyValueIncreaseRate = this.state.propertyValueIncreaseRate;
+    const inflationRate = this.state.inflationRate;
 
     return (
       <div>
@@ -147,6 +233,33 @@ class Calculator extends React.Component {
             monthlyRent = {parseFloat(monthlyRent)}
           />
         </fieldset>
+
+        <fieldset>
+          <legend>Enter length of residence:</legend>
+          <input
+            value={lengthOfResidence}
+            onChange={this.handleLengthOfResidenceChange} />
+          <legend>Enter property value increase rate (as %):</legend>
+          <input
+            value={propertyValueIncreaseRate}
+            onChange={this.handlePropertyValueIncreaseRateChange} />
+          <legend>Enter inflation rate (as %):</legend>
+          <input
+            value={inflationRate}
+            onChange={this.handleInflationRateChange} />
+          <CalculateOwningAdvantageAtYear
+            propertyCost = {parseFloat(propertyCost)}
+            hoa = {parseFloat(hoa)}
+            propertyTax = {parseFloat(propertyTax)} 
+            aprPercent = {parseFloat(aprPercent)}
+            mortgageLength = {parseFloat(mortgageLength)} 
+            downPayment = {parseFloat(downPayment)}
+            monthlyRent = {parseFloat(monthlyRent)}
+            lengthOfResidence = {parseFloat(lengthOfResidence)}
+            propertyValueIncreaseRate = {parseFloat(propertyValueIncreaseRate)}
+            inflationRate = {parseFloat(inflationRate)}
+          />
+        </fieldset>
       </div>
     );
   }
@@ -157,205 +270,3 @@ ReactDOM.render(
   <Calculator />,
   document.getElementById('root')
 );
-
-// const scaleNames = {
-//   hoa: 'Monthly HOA',
-//   propertyTax: "Annual Property Tax",
-//   aprPercent: "Mortgage APR",
-//   mortgageLength: "Mortgage Length in years"
-// };
-
-// class Clock extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {date: new Date()};
-//   }
-
-//   tick() {
-//     this.setState({
-//       date: new Date()
-//     });
-//   }
-
-//   componentDidMount() {
-//     this.timerID = setInterval(
-//       () => this.tick(),
-//       1000
-//     );
-
-//   }
-
-//   componentWillUnmount() {
-//     clearInterval(this.timerID);
-//   }
-
-//   render() {
-//     return (
-//       <div>
-//         <h1>Hello, world!</h1>
-//         <h2>It is {this.state.date.toLocaleTimeString()}.</h2>
-//       </div>
-//     );
-//   }
-// }
-
-// class HoaInput extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.value = 8
-//     this.handleChange = this.handleChange.bind(this);
-//   }
-
-//   handleChange(e) {
-//     this.setState({value: e.target.value});
-//   }
-
-//   render() {
-//     const hoaInputValue = this.props.hoaInputValue;
-//     return (
-//       <fieldset>
-//         <legend>Enter monthly HOA Fee:</legend>
-//         <input value={hoaInputValue}
-//                onChange={this.handleChange} />
-//       </fieldset>
-//     );
-//   }
-// }
-
-// class Calculator extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.handleHoaChange = this.handleHoaChange.bind(this);
-//   }
-
-//   handleHoaChange(hoaInputValue) {
-//     this.setState({hoaInputValue});
-//   }
-
-//   hoa() {
-
-//   }
-
-//   render() {
-//     const hoa = 3
-//     const propertyTax = 10
-
-//     return (
-//       <div>
-//         <HoaInput
-//           scale="hoa"
-//           mortgageInputValue={hoa}
-//           onMortgageChange={this.handleHoaChange} />
-//       </div>
-//     );
-//   }
-// }
-
-// ReactDOM.render(
-//   <Calculator />,
-//   document.getElementById('root')
-// );
-
-// const scaleNames = {
-//   hoa: 'Monthly HOA',
-//   propertyTax: "Annual Property Tax",
-//   aprPercent: "Mortgage APR",
-//   mortgageLength: "Mortgage Length in years"
-// };
-
-// function toCelsius(propertyTax) {
-//   return (propertyTax - 32) * 5 / 9;
-// }
-
-// function toFahrenheit(hoa) {
-//   return (hoa * 9 / 5) + 32;
-// }
-
-// function BoilingVerdict(props) {
-//   if (props.hoa >= 100) {
-//     return <p>The water would boil.</p>;
-//   }
-//   return <p>The water would not boil.</p>;
-// }
-
-// class HoaInput extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.handleChange = this.handleChange.bind(this);
-//   }
-
-//   handleChange(e) {
-//     this.props.onHoaChange(e.target.value);
-//   }
-
-//   render() {
-//     const hoaInputValue = this.props.hoaInputValue;
-//     return (
-//       <fieldset>
-//         <legend>Enter monthly HOA Fee:</legend>
-//         <input value={hoaInputValue}
-//                onChange={this.handleChange} />
-//       </fieldset>
-//     );
-//   }
-// }
-
-// class Calculator extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.handleHoaChange = this.handleHoaChange.bind(this);
-//   }
-
-//   handleHoaChange(hoaInputValue) {
-//     this.setState({hoaInputValue});
-//   }
-
-//   render() {
-//     const hoaInputValue = this.state.hoaInputValue;
-//     const hoa = 3
-//     const propertyTax = 10
-
-//     return (
-//       <div>
-//         <HoaInput
-//           scale="hoa"
-//           mortgageInputValue={hoa}
-//           onMortgageChange={this.handleHoaChange} />
-//         <BoilingVerdict
-//           hoa={parseFloat(hoa)} />
-//       </div>
-//     );
-//   }
-// }
-
-// ReactDOM.render(
-//   <Calculator />,
-//   document.getElementById('root')
-// );
-
-// ReactDOM.render(<App />, document.getElementById('root'));
-// registerServiceWorker();
-// ReactDOM.render(
-//   <h1>Hello, world!</h1>,
-//   document.getElementById('root')
-// );
-//
-// function formatName(user) {
-//   return user.firstName + ' ' + user.lastName;
-// }
-//
-// const user = {
-//   firstName: 'Harper',
-//   lastName: 'Perez'
-// };
-//
-// const element = (
-//   <h1>
-//     Hello, {formatName(user)}!
-//   </h1>
-// );
-//
-// ReactDOM.render(
-//   element,
-//   document.getElementById('root')
-// );
